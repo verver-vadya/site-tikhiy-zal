@@ -267,9 +267,11 @@ ul, ol { list-style: none; padding: 0; }
 }
 
 /* «Указатель воспроизведения»: отмечает ближайший концерт */
+/* Линия во всю высоту — только рисунок; нажимается одна надпись */
 .playhead {
   position: absolute; top: -0.5rem; bottom: -0.5rem; left: 40%;
   display: flex; align-items: flex-end; text-decoration: none;
+  pointer-events: none;
 }
 .playhead::before {
   content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: var(--ink);
@@ -281,6 +283,7 @@ ul, ol { list-style: none; padding: 0; }
     conic-gradient(from -30deg at 50% 100%, var(--ink) 60deg, transparent 0) bottom / 9px 7px no-repeat;
 }
 .playhead__label {
+  pointer-events: auto;
   position: relative; display: inline-flex; align-items: center; min-height: var(--tap);
   margin-left: 0.6rem; padding-inline: 0.15rem; background: var(--paper);
   font-size: var(--text-s); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;
@@ -289,6 +292,9 @@ ul, ol { list-style: none; padding: 0; }
 }
 @media (hover: hover) { .playhead:hover .playhead__label { text-decoration-color: currentColor; } }
 .playhead:active .playhead__label { color: var(--pencil); }
+/* Рамка фокуса вокруг надписи, а не вокруг всей высоты линии */
+.playhead:focus-visible { outline: none; }
+.playhead:focus-visible .playhead__label { outline: 2px solid var(--pencil); outline-offset: 3px; }
 @media (max-width: 47.99rem) {
   .playhead { left: 38%; align-items: flex-start; }
   .playhead__label { margin-top: 0.75rem; white-space: normal; max-width: calc(62vw - 1.5rem); padding-block: 0.35rem; line-height: 1.4; }
