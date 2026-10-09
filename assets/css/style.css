@@ -262,7 +262,7 @@ ul, ol { list-style: none; padding: 0; }
 .note-img--3 { --line: 0; left: 64%; width: clamp(4.5rem, 3rem + 4vw, 7rem); display: none; }
 .note-img--4 { --line: 2; right: 0; width: clamp(7rem, 5rem + 6vw, 11rem); display: none; }
 @media (min-width: 48rem) {
-  .note-img--2 { left: 30%; }
+  .note-img--2 { left: 20%; }
   .note-img--3, .note-img--4 { display: block; }
 }
 
@@ -299,7 +299,8 @@ ul, ol { list-style: none; padding: 0; }
 .hero__scroll { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; margin-top: 1.5rem; padding-bottom: 1rem; }
 @media (min-width: 64rem) {
   .hero { position: relative; }
-  .hero__scroll { position: absolute; bottom: 1.25rem; left: 50%; translate: -50% 0; margin: 0; padding: 0; }
+  /* Пометка справа от текста, а не по центру: длинный абзац доходит до середины экрана */
+  .hero__scroll { position: absolute; bottom: 1.25rem; right: 12%; margin: 0; padding: 0; }
   .hero__lead { padding-bottom: 1.5rem; }
 }
 .hero__scroll svg { color: var(--ink); }
@@ -339,18 +340,17 @@ ul, ol { list-style: none; padding: 0; }
   font-size: clamp(2.5rem, 1.5rem + 3.6vw, 4.75rem); line-height: 0.9; letter-spacing: -0.005em;
 }
 .gig__title sup {
+  display: inline-block; /* на узком экране подпись переносится под фамилию, а не вылезает */
   font-size: max(0.75rem, 0.2em); text-transform: none; letter-spacing: 0;
   vertical-align: top; position: relative; top: 0.2em; margin-left: 0.2em;
 }
+/* Фото к концерту живёт в своей колонке между текстом и кнопкой: наезжать ему не на что */
 .gig__img {
-  position: absolute; left: calc(100% + 1.25rem); top: 50%;
-  width: 8.5rem; height: 6.5rem; object-fit: cover;
-  translate: 0 -50%; pointer-events: none;
+  grid-area: img; display: none;
+  width: 100%; height: 6.5rem; object-fit: cover;
   clip-path: inset(0 100% 0 0);
   transition: clip-path 420ms var(--ease-out);
-  display: none;
 }
-.gig--img-left .gig__img { left: auto; right: calc(100% + 1.25rem); clip-path: inset(0 0 0 100%); }
 .gig__meta { margin-top: 0.5rem; color: var(--muted); font-size: 0.8125rem; }
 .gig.is-next .gig__num::after {
   content: "ближайший"; margin-left: 0.6rem;
@@ -369,12 +369,15 @@ ul, ol { list-style: none; padding: 0; }
 .gig__cta:active { transform: scale(0.97); background: var(--ink); color: var(--paper); }
 
 @media (min-width: 48rem) {
-  .gig { --step: 4%; grid-template-columns: 3.5rem 1fr auto; grid-template-areas: "num body cta"; padding-block: 1.5rem; }
-  .gig__img { display: block; }
+  .gig { --step: 4%; grid-template-columns: 3.5rem minmax(0, 1fr) auto; grid-template-areas: "num body cta"; padding-block: 1.5rem; }
   .gig.is-next .gig__num::after { position: absolute; left: 0; top: 0.35rem; margin: 0; }
 }
-@media (min-width: 64rem) { .gig { --step: 7%; } }
-@media (hover: hover) and (min-width: 48rem) {
+@media (min-width: 64rem) {
+  .gig { --step: 3%; grid-template-columns: 3.5rem minmax(0, 1fr) 8.5rem auto; grid-template-areas: "num body img cta"; column-gap: 1.5rem; }
+  .gig__img { display: block; }
+}
+@media (min-width: 80rem) { .gig { --step: 5%; } }
+@media (hover: hover) and (min-width: 64rem) {
   .gig:hover .gig__img, .gig:focus-within .gig__img { clip-path: inset(0 0 0 0); }
 }
 @media (prefers-reduced-motion: reduce) { .gig__img { transition: none; } }
@@ -411,10 +414,10 @@ ul, ol { list-style: none; padding: 0; }
   padding-block: 1rem; border-top: 1px solid var(--rule);
 }
 .moment img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; transition: filter 600ms var(--ease-out); }
-.moment p { transition: opacity 600ms var(--ease-out); }
+.moment p { transition: color 600ms var(--ease-out); }
 .moment b { display: block; font-family: var(--serif); font-weight: 400; font-size: 1.75rem; line-height: 1; margin-bottom: 0.35rem; }
 .js .moment:not(.is-lit) img { filter: grayscale(1) contrast(0.9); }
-.js .moment:not(.is-lit) p { opacity: 0.55; }
+.js .moment:not(.is-lit) p { color: var(--muted); } /* не прозрачность: фон подписи должен закрывать указатель */
 .staff--evening, .evening__head { display: none; }
 
 @media (min-width: 56.25rem) {
@@ -427,7 +430,9 @@ ul, ol { list-style: none; padding: 0; }
     translate: 0 -50%;
   }
   .moment img { aspect-ratio: auto; height: clamp(8rem, 5rem + 7vw, 12rem); }
-  .moment p { margin-top: 0.6rem; font-size: 0.8125rem; line-height: 1.5; }
+  .moment { z-index: 1; }
+  /* Подпись на бумажном фоне: указатель проходит за ней, а не по буквам */
+  .moment p { margin-top: 0.6rem; font-size: 0.8125rem; line-height: 1.5; background: var(--paper); }
   .evening__head {
     display: block; position: absolute; top: calc(var(--pad) - 3rem); bottom: calc(var(--pad) - 3rem); left: 0; width: 1px;
     background: var(--ink); will-change: transform;
@@ -444,7 +449,7 @@ ul, ol { list-style: none; padding: 0; }
 .signup { text-align: center; padding-bottom: var(--section); }
 .signup__strike {
   display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0.25rem 0.75rem;
-  margin-top: 0.35rem; font-size: var(--text-s); text-transform: uppercase; letter-spacing: 0.08em;
+  margin-top: 0.6rem; font-size: var(--text-s); text-transform: uppercase; letter-spacing: 0.08em;
 }
 .signup__strike .hand { font-size: 1.25rem; text-transform: none; letter-spacing: 0; rotate: -3deg; }
 .signup__title {
