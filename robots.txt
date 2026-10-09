@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://example.ru/sitemap.xml
+Sitemap: https://verver-vadya.github.io/site-tikhiy-zal/sitemap.xml
