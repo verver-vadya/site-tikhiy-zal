@@ -189,9 +189,12 @@ ul, ol { list-style: none; padding: 0; }
 
 /* ---------- Меню ---------- */
 
+/* На телефоне меню — шторка по высоте содержимого: под ней остаётся страница, тап туда закрывает меню */
 .menu {
-  position: fixed; z-index: 25; top: calc(var(--bar) + env(safe-area-inset-top)); right: 0; bottom: 0;
-  width: min(26rem, 100%); padding: 2rem var(--gutter) 2rem;
+  position: fixed; z-index: 25; top: calc(var(--bar) + env(safe-area-inset-top)); right: 0;
+  max-height: calc(100svh - var(--bar) - env(safe-area-inset-top) - 4rem);
+  width: min(26rem, 100%); padding: 1.5rem var(--gutter) 1.75rem;
+  box-shadow: 0 0 0 100vmax rgba(18, 18, 18, 0.35);
   background: var(--ink); color: var(--paper);
   display: flex; flex-direction: column; justify-content: space-between;
   overscroll-behavior: contain; overflow-y: auto;
@@ -209,9 +212,9 @@ ul, ol { list-style: none; padding: 0; }
 .menu__num { font-family: var(--mono); font-size: var(--text-s); letter-spacing: 0.1em; opacity: 0.6; }
 @media (hover: hover) { .menu__list a:hover { padding-left: 0.5rem; color: #e9b7ae; } }
 .menu__list a:active { color: #e9b7ae; }
-.notes-toggle--menu { margin-top: 2rem; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.14em; }
+.notes-toggle--menu { margin-top: 1.25rem; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.14em; }
 @media (min-width: 64rem) {
-  .menu { top: var(--rail-inset); bottom: var(--rail-inset); right: calc(var(--rail-inset) + var(--rail-w)); padding: 3rem 2.5rem; }
+  .menu { top: var(--rail-inset); bottom: var(--rail-inset); max-height: none; right: calc(var(--rail-inset) + var(--rail-w)); padding: 3rem 2.5rem; box-shadow: none; }
   .notes-toggle--menu { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .menu { transition: none; } }
