@@ -76,8 +76,10 @@
   --section: clamp(4rem, 2.5rem + 7vw, 9rem);
   --tap: 2.75rem;
 
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);    /* резкий старт: только для мелочей до 200 мс */
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-sheet: cubic-bezier(0.35, 0, 0.15, 1);  /* панели и окна: трогаются мягко, долго и плавно тормозят */
+  --ease-soft: cubic-bezier(0.45, 0, 0.2, 1);    /* наведение на крупный текст и картинки: плавно начинается и плавно гаснет */
 }
 
 /* Сброс */
@@ -205,7 +207,7 @@ ul, ol { list-style: none; padding: 0; }
   background: var(--ink); color: var(--paper);
   display: flex; flex-direction: column; justify-content: space-between;
   overscroll-behavior: contain; overflow-y: auto;
-  transform: translateX(100%); transition: transform 360ms var(--ease-out);
+  transform: translateX(100%); transition: transform 480ms var(--ease-sheet);
 }
 .menu[hidden] { display: none; }
 .menu.is-open { transform: none; }
@@ -373,7 +375,7 @@ ul, ol { list-style: none; padding: 0; }
   display: inline-block;
   font-family: var(--serif); text-transform: uppercase;
   font-size: clamp(2.5rem, 1.5rem + 3.6vw, 5.75rem); line-height: 0.9; letter-spacing: -0.005em;
-  transition: letter-spacing 450ms var(--ease-out), color 160ms ease;
+  transition: letter-spacing 700ms var(--ease-soft), color 200ms ease;
 }
 /* Название — кнопка программки; её невидимая подложка накрывает всю строку, кроме «Записаться» */
 .gig__open {
@@ -387,7 +389,7 @@ ul, ol { list-style: none; padding: 0; }
 .gig__open:active { color: var(--pencil); }
 /* Буквы фамилии разъезжаются при наведении: строка как будто делает вдох перед программкой */
 @media (hover: hover) {
-  .gig__open:hover, .gig:hover .gig__title { letter-spacing: 0.045em; }
+  .gig__open:hover, .gig:hover .gig__title { letter-spacing: 0.04em; }
 }
 .gig__title sup {
   display: inline-block; /* на узком экране подпись переносится под фамилию, а не вылезает */
@@ -399,8 +401,8 @@ ul, ol { list-style: none; padding: 0; }
   grid-area: visual; justify-self: start;
   display: flex; align-items: center; gap: 0.35rem; min-width: 0;
 }
-.gig__img { width: 4.5rem; height: 2.25rem; object-fit: contain; transition: transform 420ms var(--ease-out); }
-.gig__hint { font-size: 1.05rem; white-space: nowrap; transition: opacity 240ms ease, transform 320ms var(--ease-out); }
+.gig__img { width: 4.5rem; height: 2.25rem; object-fit: contain; transition: transform 700ms var(--ease-soft); }
+.gig__hint { font-size: 1.05rem; white-space: nowrap; transition: opacity 400ms ease, transform 600ms var(--ease-soft); }
 .gig__hint::before { content: "("; }
 .gig__hint::after { content: ")"; }
 html:not(.js) .gig__hint { display: none; }
@@ -476,18 +478,21 @@ html:not(.js) .gig__hint { display: none; }
   margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink); overflow: hidden;
 }
 .programme::backdrop { background: rgba(18, 18, 18, 0.4); }
-.programme[open]::backdrop { animation: fade 300ms ease both; }
-.programme.is-closing::backdrop { opacity: 0; transition: opacity 200ms ease; }
+.programme[open]::backdrop { animation: fade 450ms ease both; }
+.programme.is-closing::backdrop { opacity: 0; transition: opacity 320ms ease; }
 html.has-dialog { overflow: hidden; }
 .programme__sheet {
   position: absolute; left: 0; right: 0; bottom: 0; max-height: 92svh;
   display: flex; flex-direction: column;
   background: var(--paper); border-radius: 1rem 1rem 0 0;
   padding-bottom: env(safe-area-inset-bottom);
-  transform: translateY(100%); transition: transform 420ms var(--ease-out);
+  transform: translateY(100%); transition: transform 520ms var(--ease-sheet);
 }
 .programme.is-open .programme__sheet { transform: none; }
-.programme.is-closing .programme__sheet { transform: translateY(100%); transition-duration: 220ms; transition-timing-function: ease-in; }
+.programme.is-closing .programme__sheet { transform: translateY(100%); transition-duration: 320ms; }
+/* Лист не приезжает пустым: текст проявляется вслед за ним, а при закрытии гаснет первым */
+.programme__body, .programme__bar { opacity: 0; transition: opacity 260ms ease; }
+.programme.is-open .programme__body, .programme.is-open .programme__bar { opacity: 1; transition: opacity 420ms ease 140ms; }
 .programme__bar {
   position: relative; display: flex; justify-content: flex-end; align-items: center;
   padding: 0.35rem var(--gutter) 0; flex: none;
@@ -550,6 +555,7 @@ html.has-dialog { overflow: hidden; }
 }
 @media (prefers-reduced-motion: reduce) {
   .programme__sheet, .programme.is-closing .programme__sheet { transition: none; }
+  .programme__body, .programme__bar { opacity: 1; transition: none; }
 }
 
 /* ---------- Подробности ---------- */
