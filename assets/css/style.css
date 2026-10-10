@@ -476,6 +476,14 @@ html:not(.js) .gig__hint { display: none; }
 @media (hover: hover) {
   .gig:hover .gig__img, .gig:focus-within .gig__img { transform: translateX(-0.5rem); }
 }
+/* На телефоне инструмент стоит неподвижно ровно посередине между номером и «подробнее» */
+@media (max-width: 47.99rem) {
+  .gig__visual { justify-self: stretch; }
+  .gig__img { margin-inline: auto; }
+  .gig:hover .gig__img, .gig:focus-within .gig__img { transform: none; }
+}
+/* Когда «подробнее» стоит сбоку, отступ до неё тот же, что от номера, и инструмент ровно посередине */
+@media (min-width: 24.01rem) and (max-width: 47.99rem) { .gig__visual { gap: 1rem; } }
 
 
 /* ---------- Программка концерта ---------- */
@@ -483,7 +491,10 @@ html:not(.js) .gig__hint { display: none; }
 /* Бумажный лист: на телефоне шторка снизу, на компьютере выезжает справа к полосе */
 .programme {
   position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
-  margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink); overflow: hidden;
+  margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink);
+  /* clip, а не hidden: hidden всё равно прокручивается, и браузер, ставя фокус на «Закрыть», прокручивал окно —
+     лист появлялся сразу и в конце выезда подпрыгивал. clip прокрутить нельзя */
+  overflow: hidden; overflow: clip;
 }
 /* Затемнение проявляется вместе с выездом листа, а не в тяжёлый кадр открытия */
 .programme::backdrop { background: rgba(18, 18, 18, 0.4); opacity: 0; transition: opacity 320ms ease; }
@@ -623,7 +634,7 @@ html:not(.js) .moment__shade { display: none; }
 @media (prefers-reduced-motion: reduce) { .moment__shade { transition-duration: 600ms; transition-timing-function: ease; } }
 .moment b { display: block; font-family: var(--serif); font-weight: 400; font-size: 1.75rem; line-height: 1; margin-bottom: 0.35rem; }
 .js .moment:not(.is-lit) p { color: var(--muted); } /* не прозрачность: фон подписи должен закрывать указатель */
-.staff--evening, .evening__head, .evening__tips { display: none; }
+.staff--evening, .evening__head { display: none; }
 
 @media (min-width: 56.25rem) {
   /* Стан по высоте окна: весь «вечер» видно разом, пока указатель едет по нему */
@@ -645,21 +656,18 @@ html:not(.js) .moment__shade { display: none; }
   .moment { z-index: 3; }
   .moment p { margin-top: 0.6rem; font-size: 0.8125rem; line-height: 1.5; background: var(--paper); }
   .moment.is-crossing .moment__shade { border-left: 1px solid var(--ink); }
+  /* Указатель — один элемент шириной 9 px: линия и оба треугольника нарисованы фоном одного слоя,
+     поэтому вершины всегда совпадают с серединой линии, при любом масштабе экрана.
+     Длину и линейки стана подгоняет скрипт: концы выходят за крайние фото и подписи на одинаковый отступ */
   .evening__head {
-    display: block; position: absolute; top: calc(var(--pad) - 3rem); bottom: calc(var(--pad) - 3rem); left: 0; width: 1px;
-    z-index: 2; background: var(--ink); will-change: transform;
+    display: block; position: absolute; top: calc(var(--pad) - 3rem); bottom: calc(var(--pad) - 3rem);
+    left: var(--tip-left, -4px); width: var(--tip-w, 9px);
+    z-index: 2; pointer-events: none; will-change: transform;
+    background:
+      var(--tip-top, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 7'%3E%3Cpath d='M0 0H9L4.5 7Z' fill='%23121212'/%3E%3C/svg%3E")) top center / var(--tip-w, 9px) var(--tip-h, 7px) no-repeat,
+      var(--tip-bottom, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 7'%3E%3Cpath d='M4.5 0L9 7H0Z' fill='%23121212'/%3E%3C/svg%3E")) bottom center / var(--tip-w, 9px) var(--tip-h, 7px) no-repeat,
+      var(--tip-line, linear-gradient(var(--ink), var(--ink))) center / var(--tip-line-w, 1px) 100% no-repeat;
   }
-  /* Треугольники на концах — отдельный слой поверх снимков и подписей, поэтому их видно всегда,
-     а сама линия уходит под подписи и не режет буквы. Вершины стоят ровно по центру линии */
-  .evening__tips {
-    display: block; position: absolute; top: calc(var(--pad) - 3rem); bottom: calc(var(--pad) - 3rem); left: 0; width: 1px;
-    z-index: 4; pointer-events: none; will-change: transform;
-  }
-  .evening__tips::before, .evening__tips::after {
-    content: ""; position: absolute; left: 50%; width: 9px; height: 7px; translate: -50% 0; background: var(--ink);
-  }
-  .evening__tips::before { top: 0; clip-path: polygon(0 0, 100% 0, 50% 100%); }
-  .evening__tips::after { bottom: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 }
 
 /* ---------- Запись ---------- */
