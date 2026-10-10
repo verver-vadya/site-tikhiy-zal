@@ -62,22 +62,84 @@ if (next) {
   if (select) select.value = next.querySelector("[data-concert]").dataset.concert;
   if (playheadLabel) {
     const date = new Date(next.querySelector("time").dateTime);
-    const composer = next.querySelector(".gig__title").firstChild.textContent.trim();
+    const composer = next.querySelector(".gig__open").firstChild.textContent.trim();
     playheadLabel.textContent = `Ближайший: ${date.getDate()} ${MONTHS[date.getMonth()]}, ${composer}`;
   }
 } else if (playheadLabel && gigs.length) {
   playheadLabel.textContent = "Осенний сезон закончился";
 }
 
-// «Записаться» в строке афиши сразу выбирает этот концерт в форме
+// «Записаться» в строке афиши и в программке сразу выбирает этот концерт в форме
 const concertSelect = document.getElementById("f-concert");
-document.querySelectorAll("[data-concert]").forEach((link) => {
-  link.addEventListener("click", () => {
-    if (!concertSelect) return;
-    concertSelect.value = link.dataset.concert;
-    concertSelect.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+const chooseConcert = (value) => {
+  if (!concertSelect) return;
+  concertSelect.value = value;
+  concertSelect.dispatchEvent(new Event("change", { bubbles: true }));
+};
+document.querySelectorAll(".gig__cta[data-concert]").forEach((link) => {
+  link.addEventListener("click", () => chooseConcert(link.dataset.concert));
 });
+
+// Программка концерта: окно с описанием, программой и музыкантами
+const programme = document.querySelector(".programme");
+if (programme && typeof programme.showModal === "function") {
+  const body = programme.querySelector("[data-programme-body]");
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  let closing = false;
+
+  const open = (id) => {
+    const template = document.getElementById(`programme-${id}`);
+    if (!template) return;
+    body.replaceChildren(template.content.cloneNode(true));
+    body.scrollTop = 0;
+    programme.classList.remove("is-closing");
+    programme.showModal();
+    document.documentElement.classList.add("has-dialog");
+    // Лист выезжает со следующего кадра, чтобы сработал переход
+    requestAnimationFrame(() => requestAnimationFrame(() => programme.classList.add("is-open")));
+  };
+
+  // Закрытие тоже анимированное, но короче открытия; потом окно действительно закрывается
+  const close = (after) => {
+    if (!programme.open || closing) return;
+    closing = true;
+    programme.classList.add("is-closing");
+    programme.classList.remove("is-open");
+    const finish = () => {
+      closing = false;
+      programme.classList.remove("is-closing");
+      programme.close();
+      document.documentElement.classList.remove("has-dialog");
+      if (after) after();
+    };
+    if (reduceMotion.matches) finish();
+    else setTimeout(finish, 220);
+  };
+
+  document.querySelectorAll(".gig__open").forEach((button) => {
+    button.addEventListener("click", () => open(button.dataset.programme));
+  });
+  programme.addEventListener("click", (e) => {
+    if (e.target.closest("[data-close]")) return close();
+    // Клик по затемнению: сам dialog растянут на весь экран, лист внутри него
+    if (!e.target.closest(".programme__sheet")) return close();
+    const cta = e.target.closest(".programme__cta");
+    if (cta) {
+      e.preventDefault();
+      chooseConcert(cta.dataset.concert);
+      close(() => {
+        document.getElementById("zapis")?.scrollIntoView({ behavior: reduceMotion.matches ? "auto" : "smooth" });
+        history.replaceState(null, "", "#zapis");
+      });
+    }
+  });
+  // Esc: не даём окну закрыться рывком, а закрываем с анимацией
+  programme.addEventListener("cancel", (e) => { e.preventDefault(); close(); });
+  programme.addEventListener("close", () => {
+    programme.classList.remove("is-open", "is-closing");
+    document.documentElement.classList.remove("has-dialog");
+  });
+}
 
 // Как проходит вечер: на широком экране «указатель» едет по стану вместе с прокруткой
 // и проявляет фотографии, которые уже прошёл; на узком фото проявляются по мере появления
@@ -96,7 +158,13 @@ if (evening) {
     const progress = Math.min(1, Math.max(0, (vh * 0.8 - rect.top) / (vh * 0.4 + rect.height)));
     const x = progress * rect.width;
     head.style.transform = `translateX(${x}px)`;
-    moments.forEach((m) => m.classList.toggle("is-lit", x >= m.offsetLeft + 24));
+    moments.forEach((m) => {
+      // Цвет появляется ровно за линией: граница серого слоя едет вместе с указателем
+      const reveal = Math.min(m.offsetWidth, Math.max(0, x - m.offsetLeft));
+      m.style.setProperty("--reveal", `${reveal}px`);
+      m.classList.toggle("is-crossing", reveal > 0 && reveal < m.offsetWidth);
+      m.classList.toggle("is-lit", x >= m.offsetLeft + 24);
+    });
   };
   const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
 
@@ -113,7 +181,7 @@ if (evening) {
       window.addEventListener("resize", onScroll, { passive: true });
       update();
     } else {
-      moments.forEach((m) => observer.observe(m));
+      moments.forEach((m) => { m.style.removeProperty("--reveal"); m.classList.remove("is-crossing"); observer.observe(m); });
     }
   };
   wide.addEventListener("change", setup);
