@@ -136,6 +136,10 @@ if (programme && typeof programme.showModal === "function") {
     warm();
     body.replaceChildren(template.content.cloneNode(true));
     body.scrollTop = 0;
+    // Окно открывается с фокусом на заголовке, а не на «Закрыть»: на телефоне у кнопки не появляется рамка,
+    // а экранный диктор сразу читает название концерта
+    const title = body.querySelector(".programme__title");
+    if (title) { title.tabIndex = -1; title.autofocus = true; }
     programme.classList.remove("is-closing");
     // Ждём картинку, но не дольше 120 мс: окно должно откликнуться сразу
     const pictures = [...body.querySelectorAll("img")].map((img) => decoded.get(img.src) || img.decode().catch(() => {}));
@@ -210,12 +214,13 @@ if (evening) {
     const x = progress * rect.width;
     // Линия встаёт ровно на пиксели экрана (при масштабе 125 % и 150 % тоже): не размывается и не съезжает с вершин
     const dpr = window.devicePixelRatio || 1;
-    head.style.transform = `translateX(${Math.round((rect.left + x) * dpr) / dpr - rect.left}px)`;
+    const snapped = Math.round((rect.left + x) * dpr) / dpr - rect.left;
+    head.style.transform = `translateX(${snapped}px)`;
+    // Граница цвета проходит по середине линии, а сама линия лежит поверх, поэтому края не видно
+    const middle = snapped + Math.max(1, Math.round(dpr)) / dpr / 2;
     moments.forEach((m) => {
-      // Цвет появляется ровно за линией: граница серого слоя едет вместе с указателем
-      const reveal = Math.min(m.offsetWidth, Math.max(0, x - m.offsetLeft));
+      const reveal = Math.min(m.offsetWidth, Math.max(0, middle - m.offsetLeft));
       m.style.setProperty("--reveal", `${reveal}px`);
-      m.classList.toggle("is-crossing", reveal > 0 && reveal < m.offsetWidth);
       m.classList.toggle("is-lit", x >= m.offsetLeft + 24);
     });
   };
@@ -289,7 +294,7 @@ if (evening) {
       update();
     } else {
       reset();
-      moments.forEach((m) => { m.style.removeProperty("--reveal"); m.classList.remove("is-crossing"); observer.observe(m); });
+      moments.forEach((m) => { m.style.removeProperty("--reveal"); observer.observe(m); });
     }
   };
   wide.addEventListener("change", setup);
