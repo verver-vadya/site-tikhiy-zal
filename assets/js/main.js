@@ -69,6 +69,29 @@ if (next) {
   playheadLabel.textContent = "Осенний сезон закончился";
 }
 
+// Фамилия в афише раскладывается на буквы, чтобы при наведении каждая отъезжала своим transform.
+// Экранный диктор читает фамилию целиком из скрытой копии, а буквы от него спрятаны
+document.querySelectorAll(".gig__open").forEach((button) => {
+  const text = button.firstChild;
+  if (!text || text.nodeType !== Node.TEXT_NODE) return;
+  const name = text.textContent.trim();
+  const letters = document.createElement("span");
+  letters.className = "gig__name";
+  letters.setAttribute("aria-hidden", "true");
+  [...name].forEach((ch, i) => {
+    const span = document.createElement("span");
+    span.className = "gig__ch";
+    span.style.setProperty("--i", i);
+    span.textContent = ch;
+    letters.append(span);
+  });
+  const spoken = document.createElement("span");
+  spoken.className = "visually-hidden";
+  spoken.textContent = name;
+  text.replaceWith(spoken, letters);
+  button.querySelector("sup")?.style.setProperty("--n", name.length);
+});
+
 // «Записаться» в строке афиши и в программке сразу выбирает этот концерт в форме
 const concertSelect = document.getElementById("f-concert");
 const chooseConcert = (value) => {
@@ -87,16 +110,44 @@ if (programme && typeof programme.showModal === "function") {
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let closing = false;
 
-  const open = (id) => {
+  // Картинки программок заранее скачиваем и раскодируем, пока страница простаивает:
+  // иначе раскодирование большой картинки съедает первые кадры выезда
+  const decoded = new Map();
+  const warm = () => {
+    document.querySelectorAll("template[id^='programme-']").forEach((template) => {
+      template.content.querySelectorAll("img").forEach((img) => {
+        if (decoded.has(img.src)) return;
+        const pic = new Image();
+        pic.src = img.src;
+        decoded.set(img.src, pic.decode().catch(() => {}));
+      });
+    });
+  };
+  if ("requestIdleCallback" in window) requestIdleCallback(warm, { timeout: 3000 });
+  else setTimeout(warm, 1500);
+
+  const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+  let opening = 0;
+
+  const open = async (id) => {
     const template = document.getElementById(`programme-${id}`);
-    if (!template) return;
+    if (!template || programme.open) return;
+    const ticket = ++opening;
+    warm();
     body.replaceChildren(template.content.cloneNode(true));
     body.scrollTop = 0;
     programme.classList.remove("is-closing");
+    // Ждём картинку, но не дольше 120 мс: окно должно откликнуться сразу
+    const pictures = [...body.querySelectorAll("img")].map((img) => decoded.get(img.src) || img.decode().catch(() => {}));
+    await Promise.race([Promise.all(pictures), new Promise((resolve) => setTimeout(resolve, 120))]);
+    if (ticket !== opening) return;
     programme.showModal();
     document.documentElement.classList.add("has-dialog");
-    // Лист выезжает со следующего кадра, чтобы сработал переход
-    requestAnimationFrame(() => requestAnimationFrame(() => programme.classList.add("is-open")));
+    // Самый тяжёлый кадр (окно встаёт поверх страницы) проходит без движения.
+    // Выезд начинается через два кадра, когда браузер уже свободен, поэтому ни один кадр анимации не теряется
+    await nextFrame();
+    await nextFrame();
+    if (ticket === opening && programme.open) programme.classList.add("is-open");
   };
 
   // Закрытие тоже анимированное, но короче открытия; потом окно действительно закрывается
@@ -112,8 +163,7 @@ if (programme && typeof programme.showModal === "function") {
       document.documentElement.classList.remove("has-dialog");
       if (after) after();
     };
-    if (reduceMotion.matches) finish();
-    else setTimeout(finish, 320);
+    setTimeout(finish, reduceMotion.matches ? 220 : 320);
   };
 
   document.querySelectorAll(".gig__open").forEach((button) => {
@@ -168,24 +218,43 @@ if (evening) {
   };
   const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
 
+  // Нижний конец указателя выходит за самое низкое фото на столько же, на сколько верхний —
+  // за самое высокое: полоса выглядит симметричной на любом экране
+  const placeHead = () => {
+    head.style.removeProperty("bottom");
+    if (!wide.matches) return;
+    const box = stage.getBoundingClientRect();
+    const line = head.getBoundingClientRect();
+    const photos = moments.map((m) => m.querySelector("img").getBoundingClientRect());
+    const highest = Math.min(...photos.map((r) => r.top));
+    const lowest = Math.max(...photos.map((r) => r.bottom));
+    const overhang = highest - line.top;
+    head.style.bottom = `${Math.max(0, box.bottom - (lowest + overhang))}px`;
+  };
+  const onResize = () => { placeHead(); onScroll(); };
+
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add("is-lit"); });
   }, { threshold: 0.6 });
 
   const setup = () => {
     window.removeEventListener("scroll", onScroll);
-    window.removeEventListener("resize", onScroll);
+    window.removeEventListener("resize", onResize);
     observer.disconnect();
     if (wide.matches) {
       window.addEventListener("scroll", onScroll, { passive: true });
-      window.addEventListener("resize", onScroll, { passive: true });
+      window.addEventListener("resize", onResize, { passive: true });
+      placeHead();
       update();
     } else {
+      head.style.removeProperty("bottom");
       moments.forEach((m) => { m.style.removeProperty("--reveal"); m.classList.remove("is-crossing"); observer.observe(m); });
     }
   };
   wide.addEventListener("change", setup);
   setup();
+  // Подписи под фото сдвигают снимки, пока грузятся шрифты: пересчитываем, когда шрифты готовы
+  document.fonts?.ready.then(placeHead);
 }
 
 // Текущий год в подвале (в HTML тоже вписан год на случай, если скрипт не загрузится)
