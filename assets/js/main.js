@@ -197,8 +197,7 @@ const evening = document.querySelector("[data-evening]");
 if (evening) {
   const stage = evening.querySelector(".evening__stage");
   const head = evening.querySelector(".evening__head");
-  const tips = evening.querySelector(".evening__tips");
-  const pointer = [head, tips].filter(Boolean);
+  const staff = evening.querySelector(".staff--evening");
   const moments = [...evening.querySelectorAll(".moment")];
   const wide = matchMedia("(min-width: 56.25rem)");
   let frame = 0;
@@ -209,9 +208,9 @@ if (evening) {
     const vh = window.innerHeight;
     const progress = Math.min(1, Math.max(0, (vh * 0.8 - rect.top) / (vh * 0.4 + rect.height)));
     const x = progress * rect.width;
-    // Сдвиг округляется до пикселя экрана: линия толщиной в пиксель остаётся чёткой и не съезжает с вершин треугольников
+    // Линия встаёт ровно на пиксели экрана (при масштабе 125 % и 150 % тоже): не размывается и не съезжает с вершин
     const dpr = window.devicePixelRatio || 1;
-    pointer.forEach((el) => { el.style.transform = `translateX(${Math.round(x * dpr) / dpr}px)`; });
+    head.style.transform = `translateX(${Math.round((rect.left + x) * dpr) / dpr - rect.left}px)`;
     moments.forEach((m) => {
       // Цвет появляется ровно за линией: граница серого слоя едет вместе с указателем
       const reveal = Math.min(m.offsetWidth, Math.max(0, x - m.offsetLeft));
@@ -222,18 +221,56 @@ if (evening) {
   };
   const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
 
-  // Нижний конец указателя выходит за самое низкое фото на столько же, на сколько верхний —
-  // за самое высокое: полоса выглядит симметричной на любом экране
+  // Указатель и стан подгоняются под снимки на любом экране:
+  // нижний конец выходит из-под самой низкой подписи на столько же, на сколько верхний — над самым высоким фото,
+  // а пять линеек стана разложены с равным шагом так, что каждая фотография лежит хотя бы на одной из них
+  const LINES = 5;
+  const reset = () => {
+    head.style.removeProperty("bottom");
+    stage.style.removeProperty("margin-bottom");
+    ["top", "height", "--gap"].forEach((prop) => staff?.style.removeProperty(prop));
+  };
+  // Линия и треугольники рисуются картинками, посчитанными прямо в пикселях экрана (при 100, 125, 150 % — свои):
+  // линия — целое число пикселей, треугольник той же «чётности», так что вершина приходится ровно на середину линии
+  const svg = (w, h, body, extra = "") =>
+    `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}' ${extra}>${body}</svg>`)}")`;
+  const fitPixels = () => {
+    const dpr = window.devicePixelRatio || 1;
+    const hair = Math.max(1, Math.round(dpr));
+    let tip = Math.round(9 * dpr);
+    if ((tip - hair) % 2) tip += 1;
+    const tipH = Math.round(7 * dpr);
+    const ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#121212";
+    const set = (name, value) => head.style.setProperty(name, value);
+    set("--tip-w", `${tip / dpr}px`);
+    set("--tip-h", `${tipH / dpr}px`);
+    set("--tip-left", `${-(tip - hair) / 2 / dpr}px`);
+    set("--tip-line-w", `${tip / dpr}px`);
+    set("--tip-top", svg(tip, tipH, `<path d='M0 0H${tip}L${tip / 2} ${tipH}Z' fill='${ink}'/>`));
+    set("--tip-bottom", svg(tip, tipH, `<path d='M${tip / 2} 0L${tip} ${tipH}H0Z' fill='${ink}'/>`));
+    set("--tip-line", svg(tip, 1, `<rect x='${(tip - hair) / 2}' width='${hair}' height='1' fill='${ink}'/>`, "preserveAspectRatio='none'"));
+  };
   const placeHead = () => {
-    pointer.forEach((el) => el.style.removeProperty("bottom"));
+    reset();
     if (!wide.matches) return;
+    fitPixels();
     const box = stage.getBoundingClientRect();
-    const line = head.getBoundingClientRect();
     const photos = moments.map((m) => m.querySelector("img").getBoundingClientRect());
+    const texts = moments.map((m) => m.querySelector("p").getBoundingClientRect());
     const highest = Math.min(...photos.map((r) => r.top));
-    const lowest = Math.max(...photos.map((r) => r.bottom));
-    const overhang = highest - line.top;
-    pointer.forEach((el) => { el.style.bottom = `${Math.max(0, box.bottom - (lowest + overhang))}px`; });
+    const lowestPhoto = Math.max(...photos.map((r) => r.bottom));
+    const lowestText = Math.max(lowestPhoto, ...texts.map((r) => r.bottom));
+    const overhang = highest - head.getBoundingClientRect().top;
+    const bottom = Math.round(box.bottom - (lowestText + overhang));
+    head.style.bottom = `${bottom}px`;
+    if (bottom < 0) stage.style.marginBottom = `${-bottom}px`;
+    if (staff) {
+      const inset = Math.min(...photos.map((r) => r.height)) * 0.25;
+      const gap = Math.round((lowestPhoto - highest - inset * 2) / (LINES - 1));
+      staff.style.top = `${Math.round(highest + inset - box.top)}px`;
+      staff.style.setProperty("--gap", `${gap}px`);
+      staff.style.height = `${gap * (LINES - 1) + 1}px`;
+    }
   };
   const onResize = () => { placeHead(); onScroll(); };
 
@@ -251,7 +288,7 @@ if (evening) {
       placeHead();
       update();
     } else {
-      pointer.forEach((el) => el.style.removeProperty("bottom"));
+      reset();
       moments.forEach((m) => { m.style.removeProperty("--reveal"); m.classList.remove("is-crossing"); observer.observe(m); });
     }
   };
