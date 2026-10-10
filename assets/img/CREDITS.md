@@ -5,19 +5,19 @@
 
 ## Инструменты без фона
 
-Фото из открытой коллекции The Metropolitan Museum of Art (Open Access, CC0). Фон вырезан автоматически, файлы `-s` и `-l` — обычный и двойной размер для ретины. Файлы `gig-*` — те же инструменты, повёрнутые «лёжа» для строк афиши.
+Фото из открытой коллекции The Metropolitan Museum of Art (Open Access, CC0). Фон вырезан автоматически, файлы `-s` и `-l` — обычный и двойной размер для ретины. Файлы `gig-*` — те же инструменты, повёрнутые «лёжа» для строк афиши, `prog-*` — они же покрупнее для окна с программкой концерта.
 
 | Файл | Инструмент | Источник |
 |---|---|---|
 | inst-violin | Скрипка «Франческа», А. Страдивари, 1694 | https://www.metmuseum.org/art/collection/search/503010 |
 | inst-cello | Виолончель, середина XIX века | https://www.metmuseum.org/art/collection/search/505461 |
-| inst-piano, gig-piano | Рояль, 1827 | https://www.metmuseum.org/art/collection/search/503056 |
-| inst-fortepiano, gig-fortepiano | Фортепиано Б. Кристофори, 1720 | https://www.metmuseum.org/art/collection/search/501788 |
+| inst-piano, gig-piano, prog-piano | Рояль, 1827 | https://www.metmuseum.org/art/collection/search/503056 |
+| inst-fortepiano, gig-fortepiano, prog-fortepiano | Фортепиано Б. Кристофори, 1720 | https://www.metmuseum.org/art/collection/search/501788 |
 | inst-flute | Флейта, около 1852 | https://www.metmuseum.org/art/collection/search/504487 |
-| gig-antonius | Скрипка «Антониус», А. Страдивари, 1711 | https://www.metmuseum.org/art/collection/search/503008 |
-| gig-gould | Скрипка «Гулд», А. Страдивари, 1693 | https://www.metmuseum.org/art/collection/search/503045 |
-| gig-cello | Виолончель, около 1800 | https://www.metmuseum.org/art/collection/search/503234 |
-| gig-viola | Альт, 1757 | https://www.metmuseum.org/art/collection/search/505718 |
+| gig-antonius, prog-antonius | Скрипка «Антониус», А. Страдивари, 1711 | https://www.metmuseum.org/art/collection/search/503008 |
+| gig-gould, prog-gould | Скрипка «Гулд», А. Страдивари, 1693 | https://www.metmuseum.org/art/collection/search/503045 |
+| gig-cello, prog-cello | Виолончель, около 1800 | https://www.metmuseum.org/art/collection/search/503234 |
+| gig-viola, prog-viola | Альт, 1757 | https://www.metmuseum.org/art/collection/search/505718 |
 
 ## Фотографии
 
