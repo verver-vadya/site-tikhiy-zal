@@ -49,6 +49,9 @@
 }
 
 /* Токены: бумага, тушь и красный карандаш для пометок */
+/* Сдвиг букв считается в пикселях от размера названия и в таком виде достаётся и подписи в скобках */
+@property --spread { syntax: "<length>"; inherits: true; initial-value: 0px; }
+
 :root {
   --paper: #f4f3ee;
   --ink: #121212;
@@ -85,7 +88,8 @@
 /* Сброс */
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: calc(var(--bar) + 1rem); }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: calc(var(--bar) + 1rem); scrollbar-gutter: stable; }
+/* Место под полосу прокрутки держится всегда: когда окно запирает прокрутку, страница не пересчитывается и не дёргается вбок */
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 /* Большие мониторы: вся раскладка плавно крупнеет, а не растягивается пустотой (16 px на 1440, 20 px к 2560) */
 @media (min-width: 90rem) { html { font-size: clamp(100%, 0.4vw + 0.64rem, 125%); } }
@@ -216,17 +220,18 @@ ul, ol { list-style: none; padding: 0; }
   display: flex; align-items: baseline; gap: 0.75rem; min-height: var(--tap); padding-block: 0.35rem;
   font-family: var(--serif); font-size: clamp(2rem, 1.6rem + 1.5vw, 2.75rem); line-height: 1; text-transform: uppercase;
   text-decoration: none; border-bottom: 1px solid rgba(244, 243, 238, 0.18);
-  transition: color 160ms ease, padding-left 240ms var(--ease-out);
+  transition: color 160ms ease;
 }
+.menu__list a > * { transition: transform 240ms var(--ease-soft); }
 .menu__num { font-family: var(--mono); font-size: var(--text-s); letter-spacing: 0.1em; opacity: 0.6; }
-@media (hover: hover) { .menu__list a:hover { padding-left: 0.5rem; color: #e9b7ae; } }
+@media (hover: hover) { .menu__list a:hover { color: #e9b7ae; } .menu__list a:hover > * { transform: translateX(0.5rem); } }
 .menu__list a:active { color: #e9b7ae; }
 .notes-toggle--menu { margin-top: 1.25rem; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.14em; }
 @media (min-width: 64rem) {
   .menu { top: var(--rail-inset); bottom: var(--rail-inset); max-height: none; right: calc(var(--rail-inset) + var(--rail-w)); padding: 3rem 2.5rem; box-shadow: none; }
   .notes-toggle--menu { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .menu { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .menu { transform: none; opacity: 0; transition: opacity 300ms ease; } .menu.is-open { opacity: 1; } }
 
 /* ---------- Раскладка ---------- */
 
@@ -375,7 +380,8 @@ ul, ol { list-style: none; padding: 0; }
   display: inline-block;
   font-family: var(--serif); text-transform: uppercase;
   font-size: clamp(2.5rem, 1.5rem + 3.6vw, 5.75rem); line-height: 0.9; letter-spacing: -0.005em;
-  transition: letter-spacing 700ms var(--ease-soft), color 200ms ease;
+  --spread: 0.045em; /* на сколько отъезжает каждая следующая буква */
+  transition: color 200ms ease;
 }
 /* Название — кнопка программки; её невидимая подложка накрывает всю строку, кроме «Записаться» */
 .gig__open {
@@ -387,9 +393,16 @@ ul, ol { list-style: none; padding: 0; }
 .gig__open:focus-visible { outline: none; }
 .gig__open:focus-visible::after { outline: 2px solid var(--pencil); outline-offset: -2px; }
 .gig__open:active { color: var(--pencil); }
-/* Буквы фамилии разъезжаются при наведении: строка как будто делает вдох перед программкой */
+/* Буквы фамилии разъезжаются при наведении: строка как будто делает вдох перед программкой.
+   Каждая буква сдвигается своим transform, а не через letter-spacing: страница не пересчитывается,
+   браузер двигает буквы на видеокарте с частотой экрана (60, 120, 144 кадров в секунду) */
+.gig__name { white-space: nowrap; }
+.gig__ch, .gig__title sup { transition: transform 700ms var(--ease-soft); }
+.gig__ch { display: inline-block; }
+.gig__ch { transform: translateX(calc(var(--on, 0) * var(--i) * var(--spread))); }
+.gig__title sup { transform: translateX(calc(var(--on, 0) * var(--n, 0) * var(--spread))); }
 @media (hover: hover) {
-  .gig__open:hover, .gig:hover .gig__title { letter-spacing: 0.04em; }
+  .gig__open:hover, .gig:hover .gig__open { --on: 1; }
 }
 .gig__title sup {
   display: inline-block; /* на узком экране подпись переносится под фамилию, а не вылезает */
@@ -407,7 +420,7 @@ ul, ol { list-style: none; padding: 0; }
 .gig__hint::after { content: ")"; }
 html:not(.js) .gig__hint { display: none; }
 /* На самых узких телефонах пометка встаёт под инструмент, чтобы не залезать на «Записаться» */
-@media (max-width: 23.4rem) {
+@media (max-width: 24rem) {
   .gig__visual { flex-direction: column; align-items: center; gap: 0; }
   .gig__hint { font-size: 1rem; line-height: 1.1; }
 }
@@ -457,18 +470,13 @@ html:not(.js) .gig__hint { display: none; }
   .gig:hover .gig__hint, .gig:focus-within .gig__hint { opacity: 1; transform: none; }
 }
 /* Лесенка названий на широком экране доходит почти до середины строки, как ноты по стану */
-/* Подпись в скобках не должна прыгать, когда буквы разъезжаются: пока строка узкая, она всегда под фамилией, на широком экране всегда рядом */
-@media (min-width: 48rem) and (max-width: 79.99rem) { .gig__title sup { display: block; margin-left: 0; top: 0; margin-top: 0.35rem; } }
-@media (min-width: 80rem) { .gig { --step: 5%; } .gig__title { white-space: nowrap; } }
+@media (min-width: 80rem) { .gig { --step: 5%; } }
 @media (min-width: 100rem) { .gig { --step: 7%; } }
 /* Инструмент только чуть подаётся навстречу названию: главное движение теперь у букв */
 @media (hover: hover) {
   .gig:hover .gig__img, .gig:focus-within .gig__img { transform: translateX(-0.5rem); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .gig__img, .gig__title, .gig__hint { transition: none; }
-  .gig:hover .gig__img { transform: none; }
-}
+
 
 /* ---------- Программка концерта ---------- */
 
@@ -477,9 +485,9 @@ html:not(.js) .gig__hint { display: none; }
   position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
   margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink); overflow: hidden;
 }
-.programme::backdrop { background: rgba(18, 18, 18, 0.4); }
-.programme[open]::backdrop { animation: fade 450ms ease both; }
-.programme.is-closing::backdrop { opacity: 0; transition: opacity 320ms ease; }
+/* Затемнение проявляется вместе с выездом листа, а не в тяжёлый кадр открытия */
+.programme::backdrop { background: rgba(18, 18, 18, 0.4); opacity: 0; transition: opacity 320ms ease; }
+.programme.is-open::backdrop { opacity: 1; transition-duration: 450ms; }
 html.has-dialog { overflow: hidden; }
 .programme__sheet {
   position: absolute; left: 0; right: 0; bottom: 0; max-height: 92svh;
@@ -487,11 +495,12 @@ html.has-dialog { overflow: hidden; }
   background: var(--paper); border-radius: 1rem 1rem 0 0;
   padding-bottom: env(safe-area-inset-bottom);
   transform: translateY(100%); transition: transform 520ms var(--ease-sheet);
+  will-change: transform; contain: layout paint; /* лист живёт на своём слое: выезд не перерисовывает страницу */
 }
 .programme.is-open .programme__sheet { transform: none; }
 .programme.is-closing .programme__sheet { transform: translateY(100%); transition-duration: 320ms; }
 /* Лист не приезжает пустым: текст проявляется вслед за ним, а при закрытии гаснет первым */
-.programme__body, .programme__bar { opacity: 0; transition: opacity 260ms ease; }
+.programme__body, .programme__bar { opacity: 0; transition: opacity 260ms ease; will-change: opacity; }
 .programme.is-open .programme__body, .programme.is-open .programme__bar { opacity: 1; transition: opacity 420ms ease 140ms; }
 .programme__bar {
   position: relative; display: flex; justify-content: flex-end; align-items: center;
@@ -554,8 +563,10 @@ html.has-dialog { overflow: hidden; }
   .programme__img { max-height: 14rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .programme__sheet, .programme.is-closing .programme__sheet { transition: none; }
-  .programme__body, .programme__bar { opacity: 1; transition: none; }
+  /* Если в системе просят меньше движения, лист не выезжает, а мягко проявляется на месте */
+  .programme__sheet, .programme.is-closing .programme__sheet { transform: none; opacity: 0; transition: opacity 360ms ease; }
+  .programme.is-open .programme__sheet { opacity: 1; }
+  .programme.is-closing .programme__sheet { opacity: 0; transition-duration: 220ms; }
 }
 
 /* ---------- Подробности ---------- */
@@ -596,22 +607,23 @@ html.has-dialog { overflow: hidden; }
 .moment img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
 .moment p { transition: color 600ms var(--ease-out); }
 /* Серый слой лежит справа от границы --reveal: слева фото уже цветное, справа ещё нет */
-.moment__photo { position: relative; }
+.moment__photo { position: relative; overflow: hidden; }
+/* Слой сдвигается transform, а не left: граница цвета едет плавно и не заставляет пересчитывать страницу */
 .moment__shade {
-  position: absolute; top: 0; bottom: 0; right: 0; left: var(--reveal, 0px);
+  position: absolute; inset: 0; transform: translateX(var(--reveal, 0px)); will-change: transform;
   -webkit-backdrop-filter: grayscale(1) contrast(0.9); backdrop-filter: grayscale(1) contrast(0.9);
   pointer-events: none;
 }
 html:not(.js) .moment__shade { display: none; }
 /* На телефоне указателя нет: фото окрашивается слева направо, когда появляется на экране */
 @media (max-width: 56.24rem) {
-  .moment__shade { transition: left 1400ms var(--ease-in-out); }
-  .moment.is-lit .moment__shade { left: 100%; }
+  .moment__shade { transition: transform 1400ms var(--ease-in-out); }
+  .moment.is-lit .moment__shade { transform: translateX(100%); }
 }
-@media (prefers-reduced-motion: reduce) { .moment__shade { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .moment__shade { transition-duration: 600ms; transition-timing-function: ease; } }
 .moment b { display: block; font-family: var(--serif); font-weight: 400; font-size: 1.75rem; line-height: 1; margin-bottom: 0.35rem; }
 .js .moment:not(.is-lit) p { color: var(--muted); } /* не прозрачность: фон подписи должен закрывать указатель */
-.staff--evening, .evening__head { display: none; }
+.staff--evening, .evening__head, .evening__tips { display: none; }
 
 @media (min-width: 56.25rem) {
   /* Стан по высоте окна: весь «вечер» видно разом, пока указатель едет по нему */
@@ -637,11 +649,17 @@ html:not(.js) .moment__shade { display: none; }
     display: block; position: absolute; top: calc(var(--pad) - 3rem); bottom: calc(var(--pad) - 3rem); left: 0; width: 1px;
     z-index: 2; background: var(--ink); will-change: transform;
   }
-  .evening__head::before, .evening__head::after {
-    content: ""; position: absolute; left: -4px; border-inline: 4.5px solid transparent;
+  /* Треугольники на концах — отдельный слой поверх снимков и подписей, поэтому их видно всегда,
+     а сама линия уходит под подписи и не режет буквы. Вершины стоят ровно по центру линии */
+  .evening__tips {
+    display: block; position: absolute; top: calc(var(--pad) - 3rem); bottom: calc(var(--pad) - 3rem); left: 0; width: 1px;
+    z-index: 4; pointer-events: none; will-change: transform;
   }
-  .evening__head::before { top: 0; border-top: 7px solid var(--ink); }
-  .evening__head::after { bottom: 0; border-bottom: 7px solid var(--ink); }
+  .evening__tips::before, .evening__tips::after {
+    content: ""; position: absolute; left: 50%; width: 9px; height: 7px; translate: -50% 0; background: var(--ink);
+  }
+  .evening__tips::before { top: 0; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  .evening__tips::after { bottom: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 }
 
 /* ---------- Запись ---------- */
