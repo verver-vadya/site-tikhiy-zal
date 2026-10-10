@@ -113,7 +113,7 @@ if (programme && typeof programme.showModal === "function") {
       if (after) after();
     };
     if (reduceMotion.matches) finish();
-    else setTimeout(finish, 220);
+    else setTimeout(finish, 320);
   };
 
   document.querySelectorAll(".gig__open").forEach((button) => {
