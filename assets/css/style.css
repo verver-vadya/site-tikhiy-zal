@@ -651,7 +651,7 @@ html:not(.js) .moment__shade { display: none; }
   .moment {
     position: absolute; left: var(--x); top: calc(var(--pad) + var(--line) * var(--gap));
     width: clamp(10rem, 4rem + 13vw, 22rem); height: 0; padding: 0; border: 0;
-    display: flex; flex-direction: column; justify-content: center; gap: 0;
+    display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 0;
   }
   .moment > * { flex-shrink: 0; }
   .moment img { aspect-ratio: auto; height: calc(var(--gap) * 1.7); }
