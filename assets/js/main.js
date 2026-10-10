@@ -1,5 +1,8 @@
 document.documentElement.classList.add("js");
 
+// Safari на iPhone показывает нажатие (:active) только если на странице слушают касания
+document.addEventListener("touchstart", () => {}, { passive: true });
+
 // Меню: закрывается кнопкой, по ссылке, по Esc и по клику вне меню
 const toggle = document.querySelector(".menu-toggle");
 const menu = document.getElementById("menu");
@@ -54,6 +57,7 @@ const next = gigs.find((gig) => new Date(gig.querySelector("time").dateTime) > n
 const playheadLabel = document.querySelector(".playhead__label");
 if (next) {
   next.classList.add("is-next");
+  document.querySelector(".playhead")?.setAttribute("href", `#${next.id}`);
   const select = document.getElementById("f-concert");
   if (select) select.value = next.querySelector("[data-concert]").dataset.concert;
   if (playheadLabel) {
