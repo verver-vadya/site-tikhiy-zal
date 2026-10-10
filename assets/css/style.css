@@ -617,6 +617,8 @@ html.has-dialog { overflow: hidden; }
   padding-block: 1rem; border-top: 1px solid var(--rule);
 }
 .moment img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+/* У пюпитра главное наверху (подставка для нот), а внизу пустое поле: кадр сдвинут к верху */
+.moment__img--top { object-position: 50% 12%; }
 .moment p { transition: color 600ms var(--ease-out); }
 /* Серый слой лежит справа от границы --reveal: слева фото уже цветное, справа ещё нет */
 .moment__photo { position: relative; overflow: hidden; }
