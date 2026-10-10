@@ -623,7 +623,7 @@ html:not(.js) .moment__shade { display: none; }
 @media (prefers-reduced-motion: reduce) { .moment__shade { transition-duration: 600ms; transition-timing-function: ease; } }
 .moment b { display: block; font-family: var(--serif); font-weight: 400; font-size: 1.75rem; line-height: 1; margin-bottom: 0.35rem; }
 .js .moment:not(.is-lit) p { color: var(--muted); } /* не прозрачность: фон подписи должен закрывать указатель */
-.staff--evening, .evening__head { display: none; }
+.staff--evening, .evening__head, .evening__tips { display: none; }
 
 @media (min-width: 56.25rem) {
   /* Стан по высоте окна: весь «вечер» видно разом, пока указатель едет по нему */
@@ -649,11 +649,17 @@ html:not(.js) .moment__shade { display: none; }
     display: block; position: absolute; top: calc(var(--pad) - 3rem); bottom: calc(var(--pad) - 3rem); left: 0; width: 1px;
     z-index: 2; background: var(--ink); will-change: transform;
   }
-  .evening__head::before, .evening__head::after {
-    content: ""; position: absolute; left: -4px; border-inline: 4.5px solid transparent;
+  /* Треугольники на концах — отдельный слой поверх снимков и подписей, поэтому их видно всегда,
+     а сама линия уходит под подписи и не режет буквы. Вершины стоят ровно по центру линии */
+  .evening__tips {
+    display: block; position: absolute; top: calc(var(--pad) - 3rem); bottom: calc(var(--pad) - 3rem); left: 0; width: 1px;
+    z-index: 4; pointer-events: none; will-change: transform;
   }
-  .evening__head::before { top: 0; border-top: 7px solid var(--ink); }
-  .evening__head::after { bottom: 0; border-bottom: 7px solid var(--ink); }
+  .evening__tips::before, .evening__tips::after {
+    content: ""; position: absolute; left: 50%; width: 9px; height: 7px; translate: -50% 0; background: var(--ink);
+  }
+  .evening__tips::before { top: 0; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  .evening__tips::after { bottom: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 }
 
 /* ---------- Запись ---------- */

@@ -197,6 +197,8 @@ const evening = document.querySelector("[data-evening]");
 if (evening) {
   const stage = evening.querySelector(".evening__stage");
   const head = evening.querySelector(".evening__head");
+  const tips = evening.querySelector(".evening__tips");
+  const pointer = [head, tips].filter(Boolean);
   const moments = [...evening.querySelectorAll(".moment")];
   const wide = matchMedia("(min-width: 56.25rem)");
   let frame = 0;
@@ -207,7 +209,9 @@ if (evening) {
     const vh = window.innerHeight;
     const progress = Math.min(1, Math.max(0, (vh * 0.8 - rect.top) / (vh * 0.4 + rect.height)));
     const x = progress * rect.width;
-    head.style.transform = `translateX(${x}px)`;
+    // Сдвиг округляется до пикселя экрана: линия толщиной в пиксель остаётся чёткой и не съезжает с вершин треугольников
+    const dpr = window.devicePixelRatio || 1;
+    pointer.forEach((el) => { el.style.transform = `translateX(${Math.round(x * dpr) / dpr}px)`; });
     moments.forEach((m) => {
       // Цвет появляется ровно за линией: граница серого слоя едет вместе с указателем
       const reveal = Math.min(m.offsetWidth, Math.max(0, x - m.offsetLeft));
@@ -221,7 +225,7 @@ if (evening) {
   // Нижний конец указателя выходит за самое низкое фото на столько же, на сколько верхний —
   // за самое высокое: полоса выглядит симметричной на любом экране
   const placeHead = () => {
-    head.style.removeProperty("bottom");
+    pointer.forEach((el) => el.style.removeProperty("bottom"));
     if (!wide.matches) return;
     const box = stage.getBoundingClientRect();
     const line = head.getBoundingClientRect();
@@ -229,7 +233,7 @@ if (evening) {
     const highest = Math.min(...photos.map((r) => r.top));
     const lowest = Math.max(...photos.map((r) => r.bottom));
     const overhang = highest - line.top;
-    head.style.bottom = `${Math.max(0, box.bottom - (lowest + overhang))}px`;
+    pointer.forEach((el) => { el.style.bottom = `${Math.max(0, box.bottom - (lowest + overhang))}px`; });
   };
   const onResize = () => { placeHead(); onScroll(); };
 
@@ -247,7 +251,7 @@ if (evening) {
       placeHead();
       update();
     } else {
-      head.style.removeProperty("bottom");
+      pointer.forEach((el) => el.style.removeProperty("bottom"));
       moments.forEach((m) => { m.style.removeProperty("--reveal"); m.classList.remove("is-crossing"); observer.observe(m); });
     }
   };
